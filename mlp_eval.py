@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
-from train_mlp import ThreeLayerClassifier
+from mlp_train import ThreeLayerClassifier
 
 # 1. 데이터 로딩
 X_test = torch.tensor(np.load("test_features.npy"), dtype=torch.float32)
