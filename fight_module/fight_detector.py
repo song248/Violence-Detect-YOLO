@@ -1,11 +1,6 @@
-import os
-
 import torch
 import torch.nn as nn
 from fight_module.util import *
-import dotenv
-
-dotenv.load_dotenv()
 
 
 class ThreeLayerClassifier(nn.Module):
@@ -33,7 +28,7 @@ class FightDetector:
     Fight detection module using a deep learning model.
     """
 
-    def __init__(self, fight_model):
+    def __init__(self, fight_model, threshold=0.5, conclusion_threshold=2, final_threshold=15):
         # Load pre-trained model
         self.input_size = 16
         self.hidden_size = 8
@@ -54,12 +49,12 @@ class FightDetector:
             [11, 13, 15]    # left hip - left knee - left ankle
         ]
 
-        # Set up detection thresholds
-        self.threshold = float(os.getenv("THRESHOLD"))
-        self.conclusion_threshold = float(os.getenv("CONCLUSION_THRESHOLD"))
-        self.final_threshold = float(os.getenv("FINAL_THRESHOLD"))
+        # Set detection thresholds (from arguments)
+        self.threshold = threshold
+        self.conclusion_threshold = conclusion_threshold
+        self.final_threshold = final_threshold
 
-        # Event variables
+        # Event state variable
         self.fight_detected = 0
 
     def detect(self, conf, xyn):
@@ -77,39 +72,26 @@ class FightDetector:
         keypoint_unseen = False
 
         for n in self.coordinate_for_angel:
-            # Keypoint numbers for creating angles
             first, mid, end = n[0], n[1], n[2]
-
-            # Gather coordinates with keypoint numbers
             c1, c2, c3 = xyn[first], xyn[mid], xyn[end]
 
-            # Check if all three coordinates of one keypoint are all zeros
-            if is_coordinate_zero(c1, c2, c2):
+            if is_coordinate_zero(c1, c2, c3):
                 keypoint_unseen = True
                 break
             else:
-                # Calculate angle from three coordinates
                 input_list.append(calculate_angle(c1, c2, c3))
-                # Calculate the mean confidence score of the three coordinates
                 conf1, conf2, conf3 = conf[first], conf[mid], conf[end]
                 input_list.append(torch.mean(torch.Tensor([conf1, conf2, conf3])).item())
 
         if keypoint_unseen:
             return False
 
-        # Make a prediction using the model
         prediction = self.model(torch.Tensor(input_list))
 
-        # Update fight detection count
         if prediction.item() > self.threshold:
             self.fight_detected += 1
         else:
-            # Decrease count when no fight is detected
             if self.fight_detected > 0:
                 self.fight_detected -= self.conclusion_threshold
 
-        # Check if a fight is concluded based on the detection count
-        if self.fight_detected > self.final_threshold:
-            return True
-        else:
-            return False
+        return self.fight_detected > self.final_threshold

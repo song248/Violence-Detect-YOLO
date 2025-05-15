@@ -8,21 +8,21 @@ from fight_module.fight_detector import FightDetector
 def run_fight_detection(video_path):
     # ======= 설정 =======
     yolo_model_path = "model/yolo/yolov8x-pose.pt"
-    # fight_model_path = "model/fight/fight-model.pth"
     fight_model_path = "model/fight/new-fight-model.pth"
     threshold = 0.6
     conclusion_threshold = 2
     final_threshold = 15
-    output_dir = "output"
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, f"result_{os.path.basename(video_path)}")
+    output_path = f"mlp_result_{os.path.basename(video_path)}"
     # ====================
 
     pose_estimator = YoloPoseEstimation(yolo_model_path)
-    fight_detector = FightDetector(fight_model=fight_model_path)
-    fight_detector.threshold = threshold
-    fight_detector.conclusion_threshold = conclusion_threshold
-    fight_detector.final_threshold = final_threshold
+
+    fight_detector = FightDetector(
+        fight_model=fight_model_path,
+        threshold=threshold,
+        conclusion_threshold=conclusion_threshold,
+        final_threshold=final_threshold
+    )
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -48,10 +48,8 @@ def run_fight_detection(video_path):
             if not ret:
                 break
 
-            # 기본적으로 원본 프레임을 저장할 준비
             annotated_frame = frame.copy()
 
-            # 포즈 추정 실행
             results = pose_estimator.estimate(frame)
 
             for r in results:
@@ -69,18 +67,15 @@ def run_fight_detection(video_path):
                     color = (0, 0, 255) if is_fight else (0, 255, 0)
                     cv2.putText(annotated_frame, label, (10, 40),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1.2, color, 3)
-                    break  # 첫 유효 결과만 처리
+                    break
 
-            # 결과 프레임을 반드시 저장
             out.write(annotated_frame)
-
-            # 화면에 표시
             cv2.imshow("Fight Detection", annotated_frame)
             if cv2.waitKey(delay) & 0xFF == ord('q'):
                 break
 
             frame_count += 1
-            pbar.update(1)  # 프로그래스바 한 칸 이동
+            pbar.update(1)
 
     cap.release()
     out.release()
@@ -89,5 +84,5 @@ def run_fight_detection(video_path):
     print(f"[INFO] 총 프레임 수: 입력 {total_frames}, 저장 {frame_count}")
 
 if __name__ == "__main__":
-    video_path = "ttt.mp4"  # 영상 경로 지정
+    video_path = "ttt.mp4"
     run_fight_detection(video_path)
