@@ -1,22 +1,21 @@
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import cv2
 import torch
-import os
 from tqdm import tqdm
+
 from fight_module.yolo_pose_estimation import YoloPoseEstimation
 from fight_module.fight_detector import FightDetector
 
 def run_fight_detection(video_path):
-    # ======= 설정 =======
     yolo_model_path = "model/yolo/yolov8x-pose.pt"
     fight_model_path = "model/fight/new-fight-model.pth"
     threshold = 0.6
     conclusion_threshold = 2
     final_threshold = 15
     output_path = f"mlp_result_{os.path.basename(video_path)}"
-    # ====================
 
     pose_estimator = YoloPoseEstimation(yolo_model_path)
-
     fight_detector = FightDetector(
         fight_model=fight_model_path,
         threshold=threshold,
@@ -26,7 +25,7 @@ def run_fight_detection(video_path):
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
-        print(f"[ERROR] 영상 열기 실패: {video_path}")
+        print(f"[ERROR] fail to read video: {video_path}")
         return
 
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -35,21 +34,16 @@ def run_fight_detection(video_path):
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    # 결과 영상 저장용 설정
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
     frame_count = 0
-
-    # tqdm 프로그래스바 시작
     with tqdm(total=total_frames, desc="Processing video", unit="frame") as pbar:
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
-
             annotated_frame = frame.copy()
-
             results = pose_estimator.estimate(frame)
 
             for r in results:
@@ -80,9 +74,9 @@ def run_fight_detection(video_path):
     cap.release()
     out.release()
     cv2.destroyAllWindows()
-    print(f"[INFO] 결과 영상 저장 완료: {output_path}")
-    print(f"[INFO] 총 프레임 수: 입력 {total_frames}, 저장 {frame_count}")
+    print(f"[INFO] Complete to save result: {output_path}")
+    print(f"[INFO] Total frames: Input {total_frames}, Save {frame_count}")
 
 if __name__ == "__main__":
-    video_path = "ttt.mp4"
+    video_path = "test_video.mp4"
     run_fight_detection(video_path)

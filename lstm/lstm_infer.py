@@ -1,13 +1,13 @@
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import cv2
 import torch
-import os
 from collections import deque
 from tqdm import tqdm
 from fight_module.yolo_pose_estimation import YoloPoseEstimation
 from lstm_train import LSTMClassifier
 from fight_module.util import calculate_angle, is_coordinate_zero
 
-# 관절 각도 계산용 keypoint 인덱스 (MLP 기준과 동일)
 KEYPOINT_PAIRS = [
     [8, 6, 2], [11, 5, 7], [6, 8, 10], [5, 7, 9],
     [6, 12, 14], [5, 11, 13], [12, 14, 16], [11, 13, 15]
@@ -21,16 +21,14 @@ def extract_features(conf, xyn):
         angle = calculate_angle(xyn[a], xyn[b], xyn[c])
         avg_conf = sum([conf[a], conf[b], conf[c]]) / 3
         features.extend([angle, avg_conf])
-    return features  # 총 16차원
+    return features 
 
 def run_lstm_inference(video_path):
-    # ========= 설정 ==========
     yolo_model_path = "model/yolo/yolov8x-pose.pt"
     lstm_model_path = "model/fight/lstm_fight_model.pth"
     seq_len = 30
     threshold = 0.5
     output_path = f"lstm_result_{os.path.basename(video_path)}"
-    # =========================
 
     pose_estimator = YoloPoseEstimation(yolo_model_path)
     model = LSTMClassifier()
@@ -42,7 +40,7 @@ def run_lstm_inference(video_path):
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
-        print(f"[ERROR] 영상 열기 실패: {video_path}")
+        print(f"[ERROR] fail to read video: {video_path}")
         return
 
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -103,9 +101,9 @@ def run_lstm_inference(video_path):
     cap.release()
     out.release()
     cv2.destroyAllWindows()
-    print(f"[INFO] 결과 영상 저장 완료: {output_path}")
-    print(f"[INFO] 총 프레임 수: 입력 {total_frames}, 저장 {frame_count}")
+    print(f"[INFO] Complete to save result: {output_path}")
+    print(f"[INFO] Total frames: Input {total_frames}, Save {frame_count}")
 
 if __name__ == "__main__":
-    video_path = "ttt.mp4"
+    video_path = "test_video.mp4"
     run_lstm_inference(video_path)

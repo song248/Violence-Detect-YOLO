@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from ultralytics import YOLO
 
 # ────────────────────────────────────────────────
-# 1. MLP 모델 정의
+# 1. MLP model
 # ────────────────────────────────────────────────
 class ThreeLayerClassifier(nn.Module):
     def __init__(self, input_size=16, hidden_size=8):
@@ -24,7 +24,7 @@ class ThreeLayerClassifier(nn.Module):
         return x
 
 # ────────────────────────────────────────────────
-# 2. 각도 추출 함수
+# 2. cal angle
 # ────────────────────────────────────────────────
 def angle_between(p1, p2, p3):
     a, b, c = np.array(p1), np.array(p2), np.array(p3)
@@ -56,7 +56,7 @@ def extract_pose_features(keypoints, confidences):
     return features
 
 # ────────────────────────────────────────────────
-# 3. Dataset 처리 함수
+# 3. Dataset 
 # ────────────────────────────────────────────────
 def process_dataset(dataset_path, label, model):
     features, labels = [], []
@@ -91,7 +91,7 @@ def process_dataset(dataset_path, label, model):
     return features, labels
 
 # ────────────────────────────────────────────────
-# 4. 학습 함수
+# 4. train
 # ────────────────────────────────────────────────
 def train(X, y):
     loader = DataLoader(TensorDataset(X, y), batch_size=32, shuffle=True)
@@ -115,9 +115,6 @@ def train(X, y):
     torch.save(model.state_dict(), "model/fight/new-fight-model.pth")
     print("[INFO] Model saved to model/fight/new-fight-model.pth")
 
-# ────────────────────────────────────────────────
-# 5. 메인 실행부
-# ────────────────────────────────────────────────
 if __name__ == "__main__":
     if os.path.exists("features.npy") and os.path.exists("labels.npy"):
         print("[INFO] Loading cached features...")
