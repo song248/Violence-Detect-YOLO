@@ -79,7 +79,6 @@ def run_lstm_inference(video_path):
                     annotated_frame = r.plot()
                     break
 
-            # 텍스트 표시 (항상 표시되도록)
             if len(feature_buffer) < seq_len or latest_prediction is None:
                 label = "WARMING UP"
                 color = (200, 200, 0)

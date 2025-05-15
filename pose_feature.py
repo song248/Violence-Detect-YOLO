@@ -6,7 +6,7 @@ from tqdm import tqdm
 from ultralytics import YOLO
 
 # ────────────────────────────────────────────────
-# 1. 각도 + confidence 추출
+# 1. extract angle + confidence
 # ────────────────────────────────────────────────
 def angle_between(p1, p2, p3):
     a, b, c = np.array(p1), np.array(p2), np.array(p3)
@@ -31,7 +31,7 @@ def extract_pose_features(keypoints, confidences):
     return features
 
 # ────────────────────────────────────────────────
-# 2. 비디오 폴더 처리 함수
+# 2. process video folder
 # ────────────────────────────────────────────────
 def process_dataset(dataset_path, label, model, frame_interval=15):
     features, labels = [], []
@@ -69,7 +69,7 @@ def process_dataset(dataset_path, label, model, frame_interval=15):
     return features, labels
 
 # ────────────────────────────────────────────────
-# 3. 전체 실행 로직
+# 3. logic
 # ────────────────────────────────────────────────
 def extract_all_and_save():
     yolo_model_path = "model/yolo/yolov8x-pose.pt"

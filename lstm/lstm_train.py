@@ -6,11 +6,6 @@ from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import os
 
-
-# ============================
-# 1. Dataset 정의
-# ============================
-
 class PoseSequenceDataset(Dataset):
     def __init__(self, features_path, labels_path, seq_len=30):
         self.features = np.load(features_path)
@@ -33,10 +28,7 @@ class PoseSequenceDataset(Dataset):
                torch.tensor(self.y_seq[idx], dtype=torch.float32).squeeze()
 
 
-# ============================
-# 2. LSTM 모델 정의
-# ============================
-
+# LSTM
 class LSTMClassifier(nn.Module):
     def __init__(self, input_size=16, hidden_size=64, num_layers=2, dropout=0.2):
         super(LSTMClassifier, self).__init__()
@@ -46,14 +38,9 @@ class LSTMClassifier(nn.Module):
 
     def forward(self, x):
         out, _ = self.lstm(x)
-        out = out[:, -1, :]  # 마지막 시점의 출력
+        out = out[:, -1, :]  # end of sequence
         out = self.fc(out)
         return self.sigmoid(out).squeeze(1)
-
-
-# ============================
-# 3. 학습 루프
-# ============================
 
 def train(model, dataloader, optimizer, criterion, device, grad_clip=None):
     model.train()
@@ -87,11 +74,6 @@ def evaluate(model, dataloader, criterion, device):
             targets.extend(y.cpu().numpy())
     acc = accuracy_score(targets, preds)
     return np.mean(losses), acc
-
-
-# ============================
-# 4. 실행
-# ============================
 
 def main():
     BATCH_SIZE = 64
@@ -132,7 +114,7 @@ def main():
         else:
             patience_counter += 1
             if patience_counter >= PATIENCE:
-                print(f"🛑 Early stopping: {PATIENCE}")
+                print(f"Early stopping: {PATIENCE}")
                 break
 
 if __name__ == "__main__":
